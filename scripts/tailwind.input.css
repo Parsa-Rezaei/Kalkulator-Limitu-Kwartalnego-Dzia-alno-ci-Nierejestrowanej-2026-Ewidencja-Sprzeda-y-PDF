@@ -7,6 +7,7 @@
   [hidden] { display: none !important; }
   summary { cursor: pointer; }
   summary::-webkit-details-marker { display: none; }
+  @media print { header, footer, #jdg-card, .no-print { display: none !important; } }
 }
 
 @layer components {

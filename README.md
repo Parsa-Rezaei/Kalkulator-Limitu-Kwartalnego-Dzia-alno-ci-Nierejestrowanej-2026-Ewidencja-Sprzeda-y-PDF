@@ -8,7 +8,7 @@
 
 ## Polski
 
-Bezpłatna aplikacja w przeglądarce dla osób prowadzących **działalność nierejestrowaną** w 2026 r. (korepetycje, rękodzieło, copywriting, drobne usługi). Cała aplikacja to jeden plik `index.html` – bez serwera, bez logowania. Dane zapisują się wyłącznie w przeglądarce użytkownika (`localStorage`).
+Bezpłatna aplikacja w przeglądarce dla osób prowadzących **działalność nierejestrowaną** w 2026 r. (korepetycje, rękodzieło, copywriting, drobne usługi). Statyczna strona – bez serwera, bez logowania, bez skryptów z innych domen. Dane zapisują się wyłącznie w przeglądarce użytkownika (`localStorage`).
 
 ### Funkcje
 
@@ -40,53 +40,64 @@ Bezpłatna aplikacja w przeglądarce dla osób prowadzących **działalność ni
 | PIT | przychód z innych źródeł w PIT-36, skala 12% / 32% (próg 120 000 zł), kwota wolna 30 000 zł, brak zaliczek | ustawa o PIT |
 | ZUS | brak składek w działalności nierejestrowanej | – |
 
-Przepisy sprawdzono w październiku 2026 r. Wartości liczbowe są w obiekcie `CONFIG` na początku skryptu w `index.html`.
+Przepisy sprawdzono w październiku 2026 r. Wartości liczbowe są w obiekcie `CONFIG` na początku pliku `assets/app.js`.
 
 ### Uruchomienie
 
-- **Lokalnie:** otwórz `index.html` w przeglądarce.
 - **GitHub Pages (bezpłatny hosting):** *Settings → Pages → Build and deployment → Source: Deploy from a branch* → wybierz gałąź z plikiem `index.html` i folder `/ (root)` → *Save*. Po 1–2 minutach strona będzie dostępna pod adresem `https://<użytkownik>.github.io/<nazwa-repozytorium>/`.
+- **Lokalnie:** otwórz `index.html` w przeglądarce albo w folderze projektu uruchom `python3 -m http.server 8000` i otwórz `http://localhost:8000/`.
 
-Do działania potrzebny jest internet tylko dla bibliotek z CDN (jsDelivr): Chart.js (wykres) i pdfmake (PDF, ładowany dopiero przy pierwszym pobraniu dokumentu). Bez nich ewidencja, limity i obliczenia działają nadal.
+Wszystkie pliki (także Chart.js i pdfmake) są serwowane z tej samej domeny – strona nie ładuje niczego z zewnętrznych CDN.
 
-### Konfiguracja (monetyzacja)
+### Konfiguracja (monetyzacja) – plik `assets/config.js`
 
-W `index.html` znajdź sekcję `KONFIGURACJA` i ustaw:
+To jedyny plik, który trzeba edytować:
 
 ```js
-AFFILIATES: [
-  { name: 'inFakt', url: 'https://TWOJ-LINK-PARTNERSKI', text: 'Rejestracja firmy i księgowość online' },
-  { name: 'ifirma', url: 'https://TWOJ-LINK-PARTNERSKI', text: 'Księgowość internetowa dla JDG' }
-],
-BUYCOFFEE_URL: 'https://buycoffee.to/twoja-nazwa',
+window.DN_CONFIG = {
+  AFFILIATES: [
+    { name: 'inFakt', url: 'https://TWOJ-LINK-PARTNERSKI', text: 'Rejestracja firmy i księgowość online' },
+    { name: 'ifirma', url: 'https://TWOJ-LINK-PARTNERSKI', text: 'Księgowość internetowa dla JDG' }
+  ],
+  BUYCOFFEE_URL: 'https://buycoffee.to/twoja-nazwa'
+};
 ```
 
-- Linki partnerskie pojawiają się w karcie „Ścieżka JDG” (od 85% limitu) z atrybutem `rel="sponsored"` i informacją o linku partnerskim w stopce. Pusta lista `[]` ukrywa sekcję.
+- Akceptowane są tylko adresy `https://`; `BUYCOFFEE_URL` tylko `https://buycoffee.to/...`. Inne wartości są ignorowane.
+- Błąd składni w tym pliku nie psuje strony – znikają tylko linki partnerskie i przycisk BuyCoffee.
+- Linki partnerskie pojawiają się w karcie „Ścieżka JDG” (od 85% limitu) z `rel="sponsored"` i informacją o linku partnerskim w stopce. Pusta lista `[]` ukrywa sekcję.
 - Przycisk BuyCoffee (BLIK) pojawia się w stopce i w oknie po pobraniu PDF (raz na sesję). Pusty adres ukrywa przyciski.
 
-### Zmiana wyglądu (Tailwind CSS)
-
-Style Tailwind są skompilowane i wbudowane w `index.html` (szybsze ładowanie niż Tailwind Play CDN, który według dokumentacji Tailwind nie jest przeznaczony do produkcji). Po zmianie klas w HTML:
+### Budowanie i kontrola bezpieczeństwa
 
 ```bash
-npm install
-npm run build:css
+npm ci          # instalacja z weryfikacją skrótów z package-lock.json
+npm run build   # kompiluje assets/app.css, kopiuje biblioteki do vendor/ i zapisuje vendor/SHA256SUMS
+npm run check   # sprawdza, czy vendor/ i CSS są niezmienione oraz czy index.html spełnia zasady CSP
 ```
+
+Style Tailwind są skompilowane do `assets/app.css` (Tailwind Play CDN według dokumentacji Tailwind nie jest przeznaczony do produkcji, a Content-Security-Policy blokuje style inline).
 
 ### Pliki
 
 ```
-index.html                 aplikacja (HTML + CSS + JS)
-robots.txt                 zasady dla robotów wyszukiwarek
-package.json               skrypt build:css
-tailwind.config.js         konfiguracja Tailwind
-scripts/build-css.mjs      kompilacja CSS i wstawienie do index.html
-scripts/tailwind.input.css komponenty CSS (przyciski, karty, pola)
+index.html                 struktura strony, treść SEO, nagłówek Content-Security-Policy
+assets/app.js              logika aplikacji
+assets/config.js           linki partnerskie i BuyCoffee (edytuj tylko ten plik)
+assets/app.css             skompilowany Tailwind CSS
+vendor/                    Chart.js 4.5.1 i pdfmake 0.2.23 (+ licencje, SHA256SUMS)
+favicon.svg, robots.txt
+SECURITY.md                zabezpieczenia i zgłaszanie podatności
+package.json, package-lock.json, tailwind.config.js, scripts/
 ```
+
+### Bezpieczeństwo
+
+Szczegóły w [SECURITY.md](SECURITY.md): Content-Security-Policy bez `unsafe-inline`/`unsafe-eval`, Trusted Types, brak zewnętrznych skryptów, walidacja importu, kontrola sumy IBAN numeru konta, ochrona CSV przed formułami.
 
 ### Prywatność
 
-Brak plików cookie, analityki i wysyłania danych. Ewidencja, ustawienia i dane sprzedawcy są tylko w `localStorage` przeglądarki. Po dodaniu reklam lub analityki trzeba dodać politykę prywatności i (dla reklam Google w EOG) zgodę przez certyfikowaną platformę CMP.
+Brak plików cookie, analityki i wysyłania danych. Ewidencja, ustawienia i dane sprzedawcy są tylko w `localStorage` przeglądarki. Po dodaniu reklam lub analityki trzeba dodać politykę prywatności i (dla reklam Google w EOG) zgodę przez certyfikowaną platformę CMP – oraz rozszerzyć CSP o ich domeny.
 
 ### Zastrzeżenie
 
@@ -104,7 +115,7 @@ Narzędzie ma charakter informacyjny i nie stanowi porady prawnej ani podatkowej
 
 ## English
 
-A free, browser-only web app for people running a **Polish unregistered business (działalność nierejestrowana)** in 2026. The whole app is a single `index.html` file: no server, no account. Data is stored only in the user's browser (`localStorage`). The interface is in Polish.
+A free, browser-only web app for people running a **Polish unregistered business (działalność nierejestrowana)** in 2026. Static site: no server, no account, no third-party scripts. Data is stored only in the user's browser (`localStorage`). The interface is in Polish.
 
 ### Features
 
@@ -121,18 +132,18 @@ A free, browser-only web app for people running a **Polish unregistered business
 
 ### Run
 
-- **Locally:** open `index.html` in a browser.
 - **GitHub Pages:** *Settings → Pages → Source: Deploy from a branch* → select the branch containing `index.html`, folder `/ (root)` → *Save*.
+- **Locally:** open `index.html` in a browser, or run `python3 -m http.server 8000` in the project folder and open `http://localhost:8000/`.
 
-Internet access is needed only for CDN libraries (jsDelivr): Chart.js and pdfmake (loaded on the first PDF download). Without them, the ledger, limits and calculations still work.
+All files, including Chart.js and pdfmake, are served from the same origin; nothing is loaded from external CDNs.
 
 ### Configuration
 
-Edit the `CONFIG` object at the top of the script in `index.html`: `AFFILIATES` (your affiliate links; `[]` hides the block) and `BUYCOFFEE_URL` (your BuyCoffee.to page; empty hides the buttons). Legal values (minimum wage, limits, tax scale) are also in `CONFIG`.
+Edit only `assets/config.js`: `AFFILIATES` (your affiliate links, `https://` only; `[]` hides the block) and `BUYCOFFEE_URL` (`https://buycoffee.to/...` only; empty hides the buttons). Invalid values are ignored and a syntax error in that file does not break the site. Legal values (minimum wage, limits, tax scale) are in `CONFIG` at the top of `assets/app.js`.
 
-### Styles
+### Build and security check
 
-Tailwind CSS is precompiled and inlined. After changing classes: `npm install && npm run build:css`.
+`npm ci && npm run build` compiles `assets/app.css`, copies the libraries into `vendor/` and writes `vendor/SHA256SUMS`. `npm run check` fails if any vendored file or the CSS was modified or if `index.html` breaks the CSP rules. See [SECURITY.md](SECURITY.md).
 
 ### Disclaimer
 

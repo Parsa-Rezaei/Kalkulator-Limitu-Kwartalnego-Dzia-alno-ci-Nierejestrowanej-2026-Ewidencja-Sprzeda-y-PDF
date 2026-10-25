@@ -1,7 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  // Ścieżka nadpisywana przez scripts/build-css.mjs (skanuje index.html bez wbudowanego CSS).
-  content: ['./index.html'],
+  content: ['./index.html', './assets/app.js'],
   theme: { extend: {} },
   plugins: []
 };

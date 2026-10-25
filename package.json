@@ -1,12 +1,18 @@
 {
   "name": "kalkulator-dzialalnosc-nierejestrowana-2026",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Kalkulator limitu kwartalnego działalności nierejestrowanej 2026, ewidencja sprzedaży i generator rachunków PDF (aplikacja w jednym pliku index.html).",
+  "description": "Kalkulator limitu kwartalnego działalności nierejestrowanej 2026, ewidencja sprzedaży i generator rachunków PDF.",
   "scripts": {
-    "build:css": "node scripts/build-css.mjs"
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/build.mjs --check"
   },
   "devDependencies": {
+    "chart.js": "4.5.1",
+    "pdfmake": "0.2.23",
     "tailwindcss": "3.4.19"
+  },
+  "overrides": {
+    "postcss-selector-parser": "7.1.6"
   }
 }
